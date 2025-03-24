@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface & Port Health Metrics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-light: #e8f0fe;
+            --primary-dark: #0d47a1;
+            --success: #34a853;
+            --warning: #fbbc05;
+            --danger: #ea4335;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-600: #6c757d;
+            --gray-800: #343a40;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,.1);
+            --radius: 8px;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary);
+            border-radius: 8px;
+            margin-right: 12px;
+            position: relative;
+        }
+        
+        .logo::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 3px solid white;
+            border-radius: 50%;
+        }
+        
+        .title-container h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin: 0;
+        }
+        
+        .title-container p {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin: 0;
+        }
+        
+        .output-container {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        
+        .output-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .output-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin: 0;
+        }
+        
+        .output-content {
+            padding: 1.5rem;
+        }
+        
+        pre {
+            background-color: var(--gray-100);
+            padding: 16px;
+            border-radius: var(--radius);
+            overflow: auto;
+            font-family: 'SF Mono', Consolas, Monaco, monospace;
+            font-size: 13px;
+            margin: 1.5rem 0;
+            max-height: 600px;
+        }
+        
+        .timestamp {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+        }
+        
+        .error {
+            color: var(--danger);
+            padding: 20px;
+        }
+        
+        .back-btn {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .back-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="dashboard-header">
+            <div class="logo"></div>
+            <div class="title-container">
+                <h1>Interface & Port Health Metrics</h1>
+                <p>Switch interface diagnostics for {{ switch_ip }}</p>
+            </div>
+        </header>
+        
+        <div class="output-container">
+            <div class="output-header">
+                <h2 class="output-title">Interface Diagnostics</h2>
+            </div>
+            
+            <div class="output-content">
+                {% if error %}
+                    <div class="error">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h3>Error</h3>
+                        <p>{{ error }}</p>
+                    </div>
+                {% else %}
+                    <div class="timestamp">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 5px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Data collected on {{ timestamp }}
+                    </div>
+                    <pre>{{ interface_result }}</pre>
+                {% endif %}
+            </div>
+        </div>
+
+        <a href="/" class="back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5"></path>
+                <path d="M12 19l-7-7 7-7"></path>
+            </svg>
+            Back to System Health
+        </a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Switch Monitoring Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-light: #e8f0fe;
+            --primary-dark: #0d47a1;
+            --success: #34a853;
+            --warning: #fbbc05;
+            --danger: #ea4335;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-600: #6c757d;
+            --gray-800: #343a40;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,.1);
+            --radius: 8px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary);
+            border-radius: 8px;
+            margin-right: 12px;
+            position: relative;
+        }
+        
+        .logo::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 3px solid white;
+            border-radius: 50%;
+        }
+        
+        .title-container h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin: 0;
+        }
+        
+        .title-container p {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin: 0;
+        }
+        
+        .control-panel {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .control-flex {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .select-group {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .select-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--gray-800);
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-300);
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.3);
+        }
+        
+        .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .output-container {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        
+        .output-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .output-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin: 0;
+        }
+        
+        .output-content {
+            padding: 1.5rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-600);
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-card {
+            background: var(--gray-100);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        
+        .info-header {
+            background: var(--primary);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 12px 16px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        th {
+            font-weight: 600;
+            background: var(--gray-100);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .description-row td {
+            font-size: 13px;
+            color: var(--gray-600);
+            background-color: #fafafa;
+            padding: 8px 16px;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-online {
+            background-color: var(--success);
+        }
+        
+        .status-warning {
+            background-color: var(--warning);
+        }
+        
+        .status-error {
+            background-color: var(--danger);
+        }
+        
+        pre {
+            background-color: var(--gray-100);
+            padding: 16px;
+            border-radius: var(--radius);
+            overflow: auto;
+            font-family: 'SF Mono', Consolas, Monaco, monospace;
+            font-size: 13px;
+            margin: 1.5rem 0;
+            max-height: 300px;
+        }
+        
+        .timestamp {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+        }
+        
+        .cpu-chart-container {
+            padding: 20px;
+            height: 350px;
+        }
+        
+        .cpu-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        
+        .cpu-stat-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 15px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            width: 30%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cpu-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+        
+        .cpu-stat-card.five-seconds::before {
+            background-color: #4285F4;
+        }
+        
+        .cpu-stat-card.one-minute::before {
+            background-color: #F4B400;
+        }
+        
+        .cpu-stat-card.five-minutes::before {
+            background-color: #0F9D58;
+        }
+        
+        .stat-title {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .reset-btn {
+            padding: 8px 16px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 20px;
+        }
+        
+        .reset-btn:hover {
+            background: #d32f2f;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .reset-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 1rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-flex {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .cpu-stats {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .cpu-stat-card {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="dashboard-header">
+            <div class="logo"></div>
+            <div class="title-container">
+                <h1>Network Switch Monitoring</h1>
+                <p>Enterprise switch management and diagnostic tool</p>
+            </div>
+        </header>
+        
+        <div class="control-panel">
+            <div class="control-flex">
+                <div class="select-group">
+                    <label class="select-label" for="host-select">Select Switch Device</label>
+                    <select id="host-select">
+                        {% for host in hosts %}
+                        <option value="{{ host.id }}" data-ip="{{ host.ip }}">{{ host.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button class="btn" id="connect-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                    Connect to Device
+                </button>
+            </div>
+        </div>
+        
+        <div class="output-container">
+            <div class="output-header">
+                <h2 class="output-title">Switch Diagnostics</h2>
+                <div id="connection-status"></div>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tab active" data-tab="system">System Diagnostics</div>
+                <div class="tab" data-tab="interface">Interface & Port Health</div>
+            </div>
+            
+            <div class="output-content">
+                <div id="system-tab" class="tab-content active">
+                    <div class="placeholder-message">
+                        Select a switch device and click "Connect" to retrieve diagnostic information
+                    </div>
+                </div>
+                <div id="interface-tab" class="tab-content">
+                    <div class="placeholder-message">
+                        Select a switch device and switch to this tab to view interface data
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="reset-btn" id="reset-btn" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+            </svg>
+            Reset Data
+        </button>
+    </div>
+    <script>
+        $(document).ready(function() {
+            let cpuChart = null;
+            let selectedHost = null;
+            let selectedIp = null;
+            let refreshIntervalId = null;
+            let isSystemLoading = false;
+            let isInterfaceLoading = false;
+            let systemData = null;
+            let interfaceData = null;
+    
+            // Tab switching logic
+            $('.tab').click(function() {
+                $('.tab').removeClass('active');
+                $(this).addClass('active');
+                $('.tab-content').removeClass('active');
+                $('#' + $(this).data('tab') + '-tab').addClass('active');
+            });
+    
+            $("#connect-btn").click(function() {
+                selectedHost = $("#host-select").val();
+                selectedIp = $("#host-select option:selected").data("ip");
+                
+                if (!selectedHost || !selectedIp) {
+                    alert("Please select a switch device.");
+                    return;
+                }
+    
+                // Reset flags and data to ensure a fresh start
+                isSystemLoading = false;
+                isInterfaceLoading = false;
+                systemData = null;
+                interfaceData = null;
+    
+                $("#system-tab").html(`
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Connecting to ${selectedIp}...</p>
+                        <p>Retrieving system health metrics</p>
+                    </div>
+                `);
+                $("#interface-tab").html(`
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Waiting for system data before retrieving interface metrics for ${selectedIp}...</p>
+                    </div>
+                `);
+                $("#connection-status").html(`
+                    <div class="status-indicator">
+                        <div class="status-dot status-warning"></div>
+                        <span>Connecting...</span>
+                    </div>
+                `);
+                
+                console.log(`[Connect] Initiating connection to ${selectedIp} (Host: ${selectedHost})`);
+                console.log("[Connect] Step 1: Collecting system health metrics first");
+                isSystemLoading = true;
+                fetchSystemData(true)
+                    .then(() => {
+                        isSystemLoading = false;
+                        console.log("[Connect] Step 1 completed: System data fetched successfully");
+                        console.log("[Connect] Step 2: Now collecting interface metrics");
+                        isInterfaceLoading = true;
+                        return fetchInterfaceData(true);
+                    })
+                    .then(() => {
+                        isInterfaceLoading = false;
+                        console.log("[Connect] Step 2 completed: Interface data fetched successfully");
+                        console.log("[Connect] Both system and interface data collected, clearing logs and starting refresh");
+                        clearLogs();
+                        startRefreshCycle();
+                    })
+                    .catch((error) => {
+                        isSystemLoading = false;
+                        isInterfaceLoading = false;
+                        console.error("[Connect] Failed: ", error);
+                        $("#system-tab").html(`
+                            <div style="padding: 20px; color: var(--danger);">
+                                <h3>Connection Failed</h3>
+                                <p>Error: ${error}</p>
+                            </div>
+                        `);
+                        $("#interface-tab").html(`
+                            <div style="padding: 20px; color: var(--danger);">
+                                <p>Interface data not collected due to system data failure</p>
+                            </div>
+                        `);
+                        $("#connection-status").html(`
+                            <div class="status-indicator">
+                                <div class="status-dot status-error"></div>
+                                <span>Failed</span>
+                            </div>
+                        `);
+                    });
+            });
+    
+            $("#reset-btn").click(function() {
+                $.post("/reset", {})
+                    .done(function(response) {
+                        if (response.status === "reset") {
+                            $("#system-tab").html(`
+                                <div class="placeholder-message">
+                                    Select a switch device and click "Connect" to retrieve diagnostic information
+                                </div>
+                            `);
+                            $("#interface-tab").html(`
+                                <div class="placeholder-message">
+                                    Select a switch device and switch to this tab to view interface data
+                                </div>
+                            `);
+                            $("#connection-status").html('');
+                            $("#reset-btn").hide();
+                            selectedHost = null;
+                            selectedIp = null;
+                            systemData = null;
+                            interfaceData = null;
+                            if (cpuChart) {
+                                cpuChart.destroy();
+                                cpuChart = null;
+                            }
+                            stopRefreshCycle();
+                            clearLogs();
+                        }
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error(`Reset failed: ${status} - ${error}`);
+                    });
+            });
+    
+            function fetchSystemData(showLoading = false) {
+                return new Promise((resolve, reject) => {
+                    if (showLoading && !systemData) {
+                        $("#system-tab").html(`
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>Connecting to ${selectedIp}...</p>
+                                <p>Retrieving system health metrics</p>
+                            </div>
+                        `);
+                    }
+                    
+                    // Remove skip logic for initial fetch
+                    console.log(`[System] Fetching system health metrics for ${selectedIp} (Host: ${selectedHost})`);
+                    $.post("/run-script", { selected_host: selectedHost, selected_ip: selectedIp })
+                        .done(function(data) {
+                            isSystemLoading = false;
+                            console.log("[System] Data received:", data);
+                            if (data.error) {
+                                console.error("[System] Error:", data.error);
+                                $("#system-tab").html(`
+                                    <div style="padding: 20px; color: var(--danger);">
+                                        <h3>System Data Error</h3>
+                                        <p>${data.error}</p>
+                                        <pre>${data.details || 'No additional details provided'}</pre>
+                                    </div>
+                                `);
+                                $("#connection-status").html(`
+                                    <div class="status-indicator">
+                                        <div class="status-dot status-error"></div>
+                                        <span>Failed</span>
+                                    </div>
+                                `);
+                                $("#reset-btn").hide();
+                                reject(`System data error: ${data.error}`);
+                            } else {
+                                systemData = data;
+                                console.log("[System] Displaying system data");
+                                displaySystemData(data);
+                                $("#reset-btn").show();
+                                $("#connection-status").html(`
+                                    <div class="status-indicator">
+                                        <div class="status-dot status-online"></div>
+                                        <span>Connected</span>
+                                    </div>
+                                `);
+                                resolve();
+                            }
+                        })
+                        .fail(function(xhr, status, error) {
+                            isSystemLoading = false;
+                            console.error("[System] Fetch failed:", status, error, xhr.responseText);
+                            $("#system-tab").html(`
+                                <div style="padding: 20px; color: var(--danger);">
+                                    <h3>System Request Failed</h3>
+                                    <p>Server error: ${status} - ${error}</p>
+                                    <pre>${xhr.responseText || 'No response details available'}</pre>
+                                </div>
+                            `);
+                            $("#connection-status").html(`
+                                <div class="status-indicator">
+                                    <div class="status-dot status-error"></div>
+                                    <span>Failed</span>
+                                </div>
+                            `);
+                            $("#reset-btn").hide();
+                            reject(`System fetch failed: ${status} - ${error}`);
+                        });
+                });
+            }
+    
+            function fetchInterfaceData(showLoading = false) {
+                return new Promise((resolve, reject) => {
+                    if (showLoading && !interfaceData) {
+                        $("#interface-tab").html(`
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>Loading interface metrics for ${selectedIp}...</p>
+                            </div>
+                        `);
+                    }
+                    
+                    if (!systemData) {
+                        console.error("[Interface] Cannot fetch interface data: System data not available");
+                        $("#interface-tab").html(`
+                            <div style="padding: 20px; color: var(--danger);">
+                                <p>Interface data not collected due to missing system data</p>
+                            </div>
+                        `);
+                        reject("System data must be fetched first");
+                        return;
+                    }
+    
+                    console.log(`[Interface] Fetching interface metrics for ${selectedIp} (Host: ${selectedHost})`);
+                    $.post("/run-interface-script", { selected_host: selectedHost, selected_ip: selectedIp })
+                        .done(function(data) {
+                            isInterfaceLoading = false;
+                            console.log("[Interface] Data received:", data);
+                            if (data.error) {
+                                console.error("[Interface] Error:", data.error);
+                                $("#interface-tab").html(`
+                                    <div style="padding: 20px; color: var(--danger);">
+                                        <h3>Interface Data Error</h3>
+                                        <p>${data.error}</p>
+                                        <pre>${data.details || 'No additional details provided'}</pre>
+                                    </div>
+                                `);
+                                reject(`Interface data error: ${data.error}`);
+                            } else {
+                                interfaceData = data;
+                                console.log("[Interface] Displaying interface data");
+                                displayInterfaceData(data);
+                                $("#reset-btn").show();
+                                resolve();
+                            }
+                        })
+                        .fail(function(xhr, status, error) {
+                            isInterfaceLoading = false;
+                            console.error("[Interface] Fetch failed:", status, error, xhr.responseText);
+                            $("#interface-tab").html(`
+                                <div style="padding: 20px; color: var(--danger);">
+                                    <h3>Interface Request Failed</h3>
+                                    <p>Server error: ${status} - ${error}</p>
+                                    <pre>${xhr.responseText || 'No response details available'}</pre>
+                                </div>
+                            `);
+                            reject(`Interface fetch failed: ${status} - ${error}`);
+                        });
+                });
+            }
+    
+            function startRefreshCycle() {
+                stopRefreshCycle();
+                refreshIntervalId = setInterval(() => {
+                    if (!isSystemLoading && !isInterfaceLoading) {
+                        console.log("[Refresh] Starting background refresh");
+                        isSystemLoading = true;
+                        fetchSystemData(false)
+                            .then(() => {
+                                isSystemLoading = false;
+                                isInterfaceLoading = true;
+                                return fetchInterfaceData(false);
+                            })
+                            .then(() => {
+                                isInterfaceLoading = false;
+                                console.log("[Refresh] Background refresh completed, clearing logs");
+                                clearLogs();
+                            })
+                            .catch((error) => {
+                                isSystemLoading = false;
+                                isInterfaceLoading = false;
+                                console.error("[Refresh] Error:", error);
+                            });
+                    }
+                }, 5 * 60 * 1000);
+            }
+    
+            function stopRefreshCycle() {
+                if (refreshIntervalId) {
+                    clearInterval(refreshIntervalId);
+                    refreshIntervalId = null;
+                }
+            }
+    
+            function clearLogs() {
+                $.post("/clear-logs", {})
+                    .done(function(response) {
+                        console.log("[Logs] Switch_monitoring.log cleared:", response);
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error(`[Logs] Clear failed: ${status} - ${error}`);
+                    });
+            }
+    
+            function displaySystemData(data) {
+                console.log("[System] Rendering system data:", data);
+                if (!data || Object.keys(data).length === 0) {
+                    $("#system-tab").html(`
+                        <div style="padding: 20px; color: var(--danger);">
+                            <h3>No System Data</h3>
+                            <p>No system health metrics received from the server</p>
+                        </div>
+                    `);
+                    return;
+                }
+                let outputHtml = `
+                    <div class="timestamp">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 5px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Data last updated on ${data.timestamp}
+                    </div>
+                `;
+                
+                if (data["System Information"] && data["Inventory Information"]) {
+                    outputHtml += `
+                        <div class="info-grid">
+                            <div class="info-card">
+                                ${formatSystemInfo(data["System Information"], data["Switch IP Address"])}
+                            </div>
+                            <div class="info-card">
+                                ${formatInventoryInfo(data["Inventory Information"])}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    outputHtml += `<p>No System or Inventory Information available</p>`;
+                }
+                
+                if (data["CPU Utilization"]) {
+                    outputHtml += `${formatCpuUtilizationChart(data["CPU Utilization"])}`;
+                }
+                
+                if (data["Version Information"]) {
+                    outputHtml += `
+                        <div class="info-card" style="margin-bottom: 1.5rem;">
+                            ${formatVersionInfo(data["Version Information"])}
+                        </div>
+                    `;
+                }
+                
+                if (data["Power Supply Status"]) {
+                    outputHtml += `${formatPowerSupplyStatus(data["Power Supply Status"])}`;
+                }
+    
+                if (data["Voice VLAN Information"]) {
+                    outputHtml += `${formatVoiceVlanInfo(data["Voice VLAN Information"])}`;
+                }
+    
+                $("#system-tab").html(outputHtml);
+                
+                if (data["CPU Utilization"]) {
+                    initCpuChart(extractCpuData(data["CPU Utilization"]));
+                }
+            }
+    
+            function displayInterfaceData(data) {
+                console.log("[Interface] Rendering interface data:", data);
+                if (!data || !data.interface_result) {
+                    $("#interface-tab").html(`
+                        <div style="padding: 20px; color: var(--danger);">
+                            <h3>No Interface Data</h3>
+                            <p>No interface metrics received from the server</p>
+                        </div>
+                    `);
+                    return;
+                }
+                let outputHtml = `
+                    <div class="timestamp">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 5px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Data last updated on ${data.timestamp}
+                    </div>
+                    <pre>${data.interface_result}</pre>
+                `;
+                $("#interface-tab").html(outputHtml);
+            }
+    
+            // Remaining functions (formatSystemInfo, formatVersionInfo, etc.) remain unchanged
+            function formatSystemInfo(systemData, switchIp) {
+                let lines = systemData.split("\n");
+                let tableHtml = `
+                    <div class="info-header">System Information</div>
+                    <table>
+                        <tr>
+                            <td><strong>Switch IP</strong></td>
+                            <td>
+                                <div class="status-indicator">
+                                    <div class="status-dot status-online"></div>
+                                    <span>${switchIp}</span>
+                                </div>
+                            </td>
+                        </tr>
+                `;
+                
+                let mappings = {
+                    "System Up Time": "Uptime",
+                    "System Name": "Switch Name",
+                    "System MAC Address": "MAC Address",
+                    "System Object ID": "Object ID"
+                };
+                
+                let fanStatus = "";
+                let temperature = "";
+                
+                lines.forEach(line => {
+                    let parts = line.split(":");
+                    if (parts.length > 1) {
+                        let key = parts[0].trim();
+                        let value = parts.slice(1).join(":").trim();
+                        
+                        for (let original in mappings) {
+                            if (key.includes(original)) {
+                                if (original === "System Up Time") {
+                                    value = formatUptime(value);
+                                }
+                                tableHtml += `<tr><td><strong>${mappings[original]}</strong></td><td>${value}</td></tr>`;
+                            }
+                        }
+                    } else {
+                        let fanMatch = line.match(/(\d+)\s+Fans status is (.+)/);
+                        if (fanMatch) {
+                            fanStatus = fanMatch[2].trim();
+                        }
+                        
+                        let tempMatch = line.match(/(\d+)\s+(\d+)\s+(OK|NOT OK)/);
+                        if (tempMatch) {
+                            temperature = tempMatch[2];
+                            let status = tempMatch[3];
+                            let statusClass = status === "OK" ? "status-online" : "status-error";
+                            temperature = `
+                                <div class="status-indicator">
+                                    <div class="status-dot ${statusClass}"></div>
+                                    <span>${temperature}°C (${status})</span>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+                
+                if (fanStatus) {
+                    let statusClass = fanStatus.toLowerCase().includes("ok") ? "status-online" : "status-error";
+                    tableHtml += `
+                        <tr>
+                            <td><strong>Fan Status</strong></td>
+                            <td>
+                                <div class="status-indicator">
+                                    <div class="status-dot ${statusClass}"></div>
+                                    <span>${fanStatus}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                if (temperature) {
+                    tableHtml += `<tr><td><strong>Temperature</strong></td><td>${temperature}</td></tr>`;
+                }
+                
+                tableHtml += "</table>";
+                return tableHtml;
+            }
+            
+            function formatVersionInfo(versionData) {
+                let lines = versionData.split("\n");
+                let tableHtml = `
+                    <div class="info-header">Version Information</div>
+                    <table>
+                `;
+                
+                let version = "";
+                let installDate = "";
+                let installTime = "";
+                let md5Digest = "";
+                
+                lines.forEach(line => {
+                    if (line.includes("Version:")) {
+                        version = line.split(":")[1].trim();
+                    } else if (line.includes("Date:")) {
+                        installDate = line.split(":")[1].trim();
+                    } else if (line.includes("Time:")) {
+                        installTime = line.substring(line.indexOf("Time:") + 5).trim();
+                    } else if (line.includes("MD5 Digest:")) {
+                        md5Digest = line.split(":")[1].trim();
+                    }
+                });
+                
+                tableHtml += `<tr><td><strong>Firmware Version</strong></td><td>${version}</td></tr>`;
+                tableHtml += `<tr><td><strong>Install Date</strong></td><td>${installDate}</td></tr>`;
+                tableHtml += `<tr><td><strong>Install Time</strong></td><td>${installTime}</td></tr>`;
+                tableHtml += `<tr><td><strong>MD5 Digest</strong></td><td><code>${md5Digest}</code></td></tr>`;
+                
+                tableHtml += "</table>";
+                return tableHtml;
+            }
+            
+            function formatInventoryInfo(inventoryData) {
+                let lines = inventoryData.split("\n");
+                let tableHtml = `
+                    <div class="info-header">Inventory Information</div>
+                    <table>
+                `;
+                
+                let deviceName = "";
+                let pid = "";
+                let vid = "";
+                let sn = "";
+                
+                lines.forEach(line => {
+                    if (line.includes('NAME:')) {
+                        let match = line.match(/NAME:\s*"([^"]+)"\s+DESCR:\s*"([^"]+)"/);
+                        if (match) {
+                            deviceName = match[2].trim();
+                        }
+                    } else if (line.includes('PID:')) {
+                        let pidMatch = line.match(/PID:\s*([^\s]+)/);
+                        if (pidMatch) {
+                            pid = pidMatch[1].trim();
+                        }
+                        let vidMatch = line.match(/VID:\s*([^\s]+)/);
+                        if (vidMatch) {
+                            vid = vidMatch[1].trim();
+                        }
+                        let snMatch = line.match(/SN:\s*([^\s]+)/);
+                        if (snMatch) {
+                            sn = snMatch[1].trim();
+                        }
+                    }
+                });
+                
+                tableHtml += `<tr><td><strong>Device Name</strong></td><td>${deviceName}</td></tr>`;
+                tableHtml += `<tr><td><strong>PID (Product ID)</strong></td><td>${pid}</td></tr>`;
+                tableHtml += `<tr><td><strong>VID (Version ID)</strong></td><td>${vid}</td></tr>`;
+                tableHtml += `<tr><td><strong>SN (Serial Number)</strong></td><td>${sn}</td></tr>`;
+                tableHtml += `<tr class="description-row"><td colspan="2">Product ID (PID) identifies the specific model of the switch.</td></tr>`;
+                tableHtml += `<tr class="description-row"><td colspan="2">Version ID (VID) indicates the hardware version of the device.</td></tr>`;
+                
+                tableHtml += "</table>";
+                return tableHtml;
+            }
+            
+            function extractCpuData(cpuUtilizationData) {
+                let match = cpuUtilizationData.match(/five seconds: (\d+)%; one minute: (\d+)%; five minutes: (\d+)%/);
+                
+                if (match) {
+                    return {
+                        fiveSeconds: parseInt(match[1]),
+                        oneMinute: parseInt(match[2]),
+                        fiveMinutes: parseInt(match[3])
+                    };
+                }
+                
+                return {
+                    fiveSeconds: 0,
+                    oneMinute: 0,
+                    fiveMinutes: 0
+                };
+            }
+            
+            function formatCpuUtilizationChart(cpuUtilizationData) {
+                let cpuData = extractCpuData(cpuUtilizationData);
+                
+                return `
+                    <div class="info-card" style="margin-bottom: 1.5rem;">
+                        <div class="info-header">CPU Utilization</div>
+                        <div class="cpu-chart-container">
+                            <canvas id="cpuChart"></canvas>
+                        </div>
+                        <div class="cpu-stats">
+                            <div class="cpu-stat-card five-seconds">
+                                <div class="stat-title">Last 5 Seconds</div>
+                                <div class="stat-value">${cpuData.fiveSeconds}%</div>
+                            </div>
+                            <div class="cpu-stat-card one-minute">
+                                <div class="stat-title">Last 1 Minute</div>
+                                <div class="stat-value">${cpuData.oneMinute}%</div>
+                            </div>
+                            <div class="cpu-stat-card five-minutes">
+                                <div class="stat-title">Last 5 Minutes</div>
+                                <div class="stat-value">${cpuData.fiveMinutes}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function initCpuChart(cpuData) {
+                const ctx = document.getElementById('cpuChart');
+                
+                if (cpuChart) {
+                    cpuChart.destroy();
+                }
+                
+                cpuChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['5 Seconds', '1 Minute', '5 Minutes'],
+                        datasets: [{
+                            label: 'CPU Utilization (%)',
+                            data: [cpuData.fiveSeconds, cpuData.oneMinute, cpuData.fiveMinutes],
+                            backgroundColor: ['#4285F4', '#F4B400', '#0F9D58'],
+                            borderColor: ['#3367D6', '#E19F00', '#0B8043'],
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            maxBarThickness: 80
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Utilization: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: { drawBorder: false, color: 'rgba(0, 0, 0, 0.05)' },
+                                ticks: { callback: function(value) { return value + '%'; } },
+                                title: { display: true, text: 'Utilization Percentage', font: { weight: '600' } }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+            
+            function formatUptime(uptime) {
+                let match = uptime.match(/(\d+),(\d+):(\d+):(\d+)/);
+                if (match) {
+                    let days = match[1];
+                    let hours = match[2];
+                    let minutes = match[3];
+                    let seconds = match[4];
+                    return `${days} Days, ${hours} Hours, ${minutes} Minutes, ${seconds} Seconds`;
+                }
+                return uptime;
+            }
+    
+            function formatPowerSupplyStatus(powerData) {
+                const lines = powerData.split('\n').filter(line => line.trim() !== '');
+                const settingsData = {};
+                const generalSettings = [
+                    { key: "Power-limit mode", label: "Power Limit Mode" },
+                    { key: "Usage threshold", label: "Usage Threshold" },
+                    { key: "Trap", label: "Trap Status" },
+                    { key: "Legacy Mode", label: "Legacy Mode" },
+                    { key: "Inrush Test", label: "Inrush Test" },
+                    { key: "Class Error Detection", label: "Class Error Detection" }
+                ];
+                let moduleData = null;
+                const interfaceData = [];
+                let currentSection = "settings";
+    
+                lines.forEach((line, index) => {
+                    for (const setting of generalSettings) {
+                        if (line.includes(setting.key)) {
+                            const value = line.split(':')[1]?.trim() || '';
+                            settingsData[setting.label] = value;
+                        }
+                    }
+    
+                    if (line.includes("Unit Module") || line.includes("Power (W)") || line.includes("---- ------------")) {
+                        currentSection = "module_header";
+                    } else if (currentSection === "module_header" && line.match(/^\s*\d+\s+[A-Za-z0-9-]+/)) {
+                        const parts = line.trim().split(/\s+/);
+                        if (parts.length >= 7) {
+                            const consumedPowerStr = parts[3].split('(')[0].trim();
+                            const consumedPower = parseFloat(consumedPowerStr);
+                            const nominalPower = parseInt(parts[2]);
+                            let consumedPercent = parts[3].match(/\((\d+)%\)/) ? parseInt(parts[3].match(/\((\d+)%\)/)[1]) : null;
+                            if (consumedPercent === null && !isNaN(consumedPower) && !isNaN(nominalPower) && nominalPower > 0) {
+                                consumedPercent = Math.round((consumedPower / nominalPower) * 100);
+                            }
+                            moduleData = {
+                                unit: parts[0],
+                                model: parts[1],
+                                nominalPower: nominalPower,
+                                consumedPower: consumedPowerStr + " W",
+                                consumedPercent: consumedPercent || 0,
+                                temperature: parts[4],
+                                swVersion: parts[5],
+                                hwRevision: parts.slice(6).join(' ')
+                            };
+                        }
+                        currentSection = "module_data";
+                    }
+    
+                    if (line.match(/Interface\s+Admin\s+Oper/)) {
+                        currentSection = "interface_header";
+                    } else if (line.match(/^-+\s+-+\s+-+/)) {
+                        currentSection = "interface_data";
+                    } else if (currentSection === "interface_data" && line.match(/^\s*gi\d+/)) {
+                        const normalizedLine = line.replace(/\s+/g, ' ').trim();
+                        const parts = normalizedLine.split(' ');
+                        if (parts.length >= 6) {
+                            let powerValue = parts[3];
+                            let maxPower = null;
+                            const powerMatch = powerValue.match(/^([\d.]+)(?:\s*\(([\d.]+)\))?$/);
+                            if (powerMatch) {
+                                powerValue = powerMatch[1];
+                                maxPower = powerMatch[2];
+                            }
+                            interfaceData.push({
+                                interface: parts[0],
+                                admin: parts[1],
+                                oper: parts[2],
+                                power: parseFloat(powerValue),
+                                maxPower: maxPower ? parseFloat(maxPower) : null,
+                                class: parts[4],
+                                device: parts.length > 5 && parts[5] !== 'low' ? parts[5] : 'N/A',
+                                priority: parts[parts.length - 1]
+                            });
+                        }
+                    }
+                });
+    
+                let html = `
+                    <div class="info-card" style="margin-bottom: 1.5rem;">
+                        <div class="info-header">Power Supply Status</div>
+                        <div style="padding: 20px;">
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                `;
+    
+                Object.entries(settingsData).forEach(([key, value]) => {
+                    const statusClass = value.toLowerCase() === 'enable' ? 'status-online' : value.toLowerCase() === 'disable' ? 'status-error' : '';
+                    html += `
+                        <div style="background: var(--gray-100); border-radius: var(--radius); padding: 15px; box-shadow: var(--shadow-sm);">
+                            <div style="font-size: 14px; color: var(--gray-600); margin-bottom: 5px;">${key}</div>
+                            <div style="font-size: 16px; font-weight: 600;">
+                                ${statusClass ? `<div class="status-indicator"><div class="status-dot ${statusClass}"></div><span>${value}</span></div>` : value}
+                            </div>
+                        </div>
+                    `;
+                });
+    
+                html += `
+                            </div>
+                            ${moduleData ? `
+                            <div style="margin-bottom: 25px;">
+                                <h3 style="font-size: 16px; margin-bottom: 15px; color: var(--gray-800); font-weight: 600;">
+                                    Module: ${moduleData.model} (Unit ${moduleData.unit})
+                                </h3>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                    <div style="background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+                                        <h4 style="font-size: 14px; margin-bottom: 20px; color: var(--gray-600);">Power Consumption</h4>
+                                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                                            <div style="width: 50px; height: 50px; border-radius: 50%; border: 4px solid var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-right: 15px;">
+                                                ${moduleData.consumedPercent}%
+                                            </div>
+                                            <div>
+                                                <div style="font-weight: 600; font-size: 18px;">${moduleData.consumedPower}</div>
+                                                <div style="font-size: 14px; color: var(--gray-600);">of ${moduleData.nominalPower} W</div>
+                                            </div>
+                                        </div>
+                                        <div style="width: 100%; height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; margin-bottom: 5px;">
+                                            <div style="width: ${moduleData.consumedPercent}%; height: 100%; background: var(--primary);"></div>
+                                        </div>
+                                    </div>
+                                    <div style="background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                                        <h4 style="font-size: 14px; margin-bottom: 15px; color: var(--gray-600);">System Status</h4>
+                                        <div style="margin-bottom: 15px;">
+                                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                                <span>Temperature</span>
+                                                <span style="font-weight: 600; color: ${parseInt(moduleData.temperature) > 75 ? 'var(--warning)' : 'var(--success)'};">
+                                                    ${moduleData.temperature}°C
+                                                </span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                                <span>Software Version</span>
+                                                <span style="font-weight: 600;">${moduleData.swVersion}</span>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 12px; color: var(--gray-600); background: var(--gray-100); padding: 8px; border-radius: 4px;">
+                                            Hardware: ${moduleData.hwRevision}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            <div>
+                                <h3 style="font-size: 16px; margin-bottom: 15px; color: var(--gray-800); font-weight: 600;">
+                                    Power Over Ethernet (PoE) Interfaces
+                                </h3>
+                                <div class="table-responsive" style="overflow-x: auto;">
+                                    <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                                        <thead>
+                                            <tr>
+                                                <th style="text-align: left; padding: 12px; background: var(--gray-100); font-weight: 600; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200);">Interface</th>
+                                                <th style="text-align: left; padding: 12px; background: var(--gray-100); font-weight: 600; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200);">Admin</th>
+                                                <th style="text-align: left; padding: 12px; background: var(--gray-100); font-weight: 600; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200);">Status</th>
+                                                <th style="text-align: right; padding: 12px; background: var(--gray-100); font-weight: 600; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200);">Power (W)</th>
+                                                <th style="text-align: center; padding: 12px; background: var(--gray-100); font-weight: 600; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200);">Class</th>
+                                                <th style="text-align: left; padding: 12px; background: var(--gray-100); font-weight: 600; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200);">Priority</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                `;
+    
+                interfaceData.forEach((item, index) => {
+                    const isActive = item.oper.toLowerCase() === 'on';
+                    const statusClass = isActive ? 'status-online' : item.oper.toLowerCase() === 'searching' ? 'status-warning' : 'status-error';
+                    html += `
+                        <tr style="background-color: ${index % 2 === 0 ? 'white' : 'var(--gray-100)'};">
+                            <td style="padding: 12px; border-bottom: 1px solid var(--gray-200); font-weight: 600;">${item.interface}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--gray-200);">${item.admin}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--gray-200);">
+                                <div class="status-indicator">
+                                    <div class="status-dot ${statusClass}"></div>
+                                    <span>${item.oper}</span>
+                                </div>
+                            </td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--gray-200); text-align: right;">
+                                ${item.power.toFixed(1)} W
+                                ${item.maxPower ? `<span style="font-size: 12px; color: var(--gray-600);">(Max: ${item.maxPower.toFixed(1)} W)</span>` : ''}
+                            </td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--gray-200); text-align: center;">
+                                <span style="display: inline-block; min-width: 24px; height: 24px; background-color: ${parseInt(item.class) > 0 ? 'var(--primary-light)' : 'var(--gray-200)'}; color: ${parseInt(item.class) > 0 ? 'var(--primary-dark)' : 'var(--gray-600)'}; border-radius: 12px; text-align: center; line-height: 24px; font-weight: 600;">
+                                    ${item.class}
+                                </span>
+                            </td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--gray-200);">${item.priority}</td>
+                        </tr>
+                    `;
+                });
+    
+                html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style="margin-top: 15px; background: var(--gray-100); border-radius: var(--radius); padding: 12px; display: flex; flex-wrap: wrap; gap: 20px;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Status Legend</div>
+                                        <div style="display: flex; gap: 15px;">
+                                            <div class="status-indicator">
+                                                <div class="status-dot status-online"></div>
+                                                <span style="font-size: 13px;">On - Device powered</span>
+                                            </div>
+                                            <div class="status-indicator">
+                                                <div class="status-dot status-warning"></div>
+                                                <span style="font-size: 13px;">Searching - No device detected</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Class Legend</div>
+                                        <div style="display: flex; gap: 15px; font-size: 13px;">
+                                            <span>Class 0: 15.4W</span>
+                                            <span>Class 3: 15.4W</span>
+                                            <span>Class 4: 30W</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                return html;
+            }
+    
+            function formatVoiceVlanInfo(data) {
+                console.log("[Voice VLAN] Raw Input Data:", data);
+                const lines = (data || '').split('\n').filter(line => line.trim());
+                const vlanInfo = {};
+    
+                lines.forEach(line => {
+                    if (line.includes('Agreed Voice VLAN is received from switch')) {
+                        const value = line.split('Agreed Voice VLAN is received from switch')[1]?.trim() || 'N/A';
+                        vlanInfo['Agreed Voice VLAN is received from switch'] = value;
+                    } else {
+                        const match = line.match(/^(.+?)\s+is\s+(.+)$/i) || line.match(/^(.+?)\s+(.+)$/i);
+                        if (match) {
+                            const key = match[1].trim();
+                            const value = match[2].trim();
+                            vlanInfo[key] = value;
+                        }
+                    }
+                });
+    
+                const fields = {
+                    'Administrate Voice VLAN state': vlanInfo['Administrate Voice VLAN state'] || 'N/A',
+                    'Operational Voice VLAN state': vlanInfo['Operational Voice VLAN state'] || 'N/A',
+                    'Best Local Voice VLAN-ID': vlanInfo['Best Local Voice VLAN-ID'] || 'N/A',
+                    'Best Local VPT': vlanInfo['Best Local VPT'] || 'N/A',
+                    'Best Local DSCP': vlanInfo['Best Local DSCP'] || 'N/A',
+                    'Agreed Voice VLAN is received from switch': vlanInfo['Agreed Voice VLAN is received from switch'] || 'N/A',
+                    'Agreed Voice VLAN priority': vlanInfo['Agreed Voice VLAN priority'] || 'N/A',
+                    'Agreed Voice VLAN-ID': vlanInfo['Agreed Voice VLAN-ID'] || 'N/A',
+                    'Agreed VPT': vlanInfo['Agreed VPT'] || 'N/A',
+                    'Agreed DSCP': vlanInfo['Agreed DSCP'] || 'N/A',
+                    'Agreed Voice VLAN Last Change': vlanInfo['Agreed Voice VLAN Last Change'] || 'N/A'
+                };
+    
+                console.log("[Voice VLAN] Parsed Fields:", fields);
+                console.log("[Voice VLAN] MAC Input to formatMac:", fields['Agreed Voice VLAN is received from switch']);
+    
+                return `
+                    <div class="info-card" style="margin-bottom: 1.5rem;">
+                        <div class="info-header">Voice VLAN Information</div>
+                        <div style="padding: 20px;">
+                            <div class="info-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                                <div style="background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+                                    <h4 style="font-size: 16px; margin-bottom: 16px; color: var(--gray-800); font-weight: 600;">VLAN Status</h4>
+                                    <div style="display: flex; align-items: center; gap: 15px;">
+                                        <div style="width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary-light); display: flex; align-items: center; justify-content: center;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 14px; color: var(--gray-600);">Active VLAN ID</div>
+                                            <div style="font-size: 22px; font-weight: 600; color: var(--gray-800);">${fields['Agreed Voice VLAN-ID']}</div>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top: 20px; border-top: 1px solid var(--gray-200); padding-top: 15px;">
+                                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: var(--success); margin-right: 8px;"></div>
+                                            <div style="font-size: 14px;">Admin: ${fields['Administrate Voice VLAN state']}</div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: var(--success); margin-right: 8px;"></div>
+                                            <div style="font-size: 14px;">Operational: ${fields['Operational Voice VLAN state']}</div>
+                                        </div>
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: var(--success); margin-right: 8px;"></div>
+                                            <div style="font-size: 14px;">Last Change: ${formatDate(fields['Agreed Voice VLAN Last Change'])}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                                    <h4 style="font-size: 16px; margin-bottom: 16px; color: var(--gray-800); font-weight: 600;">Priority Settings</h4>
+                                    <div class="priority-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        ${createPriorityItem('VPT', fields['Agreed VPT'], fields['Best Local VPT'])}
+                                        ${createPriorityItem('DSCP', fields['Agreed DSCP'], fields['Best Local DSCP'])}
+                                        ${createPriorityItem('VLAN Priority', fields['Agreed Voice VLAN priority'], 'N/A')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 15px;">
+                                <h4 style="font-size: 16px; margin-bottom: 16px; color: var(--gray-800); font-weight: 600;">Voice Network Connection</h4>
+                                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 20px;">
+                                    <div style="display: flex; align-items: center; background: var(--primary-light); padding: 12px 16px; border-radius: var(--radius);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;">
+                                            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                            <line x1="6" y1="12" x2="10" y2="12"></line>
+                                            <line x1="14" y1="12" x2="18" y2="12"></line>
+                                        </svg>
+                                        <div>
+                                            <div style="font-size: 12px; color: var(--primary-dark);">Connected Switch MAC</div>
+                                            <div style="font-size: 16px; font-weight: 600; color: var(--gray-800);" id="mac-address">${formatMac(fields['Agreed Voice VLAN is received from switch'])}</div>
+                                        </div>
+                                    </div>
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <table style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td style="padding: 8px 0; border-bottom: 1px solid var(--gray-200); color: var(--gray-600); font-size: 14px;">Local VLAN-ID</td>
+                                                <td style="padding: 8px 0; border-bottom: 1px solid var(--gray-200); text-align: right; font-weight: 500;">${fields['Best Local Voice VLAN-ID']}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; border-bottom: 1px solid var(--gray-200); color: var(--gray-600); font-size: 14px;">Local VPT Configuration</td>
+                                                <td style="padding: 8px 0; border-bottom: 1px solid var(--gray-200); text-align: right; font-weight: 500;">${fields['Best Local VPT']}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; border-bottom: 1px solid var(--gray-200); color: var(--gray-600); font-size: 14px;">Local DSCP Configuration</td>
+                                                <td style="padding: 8px 0; border-bottom: 1px solid var(--gray-200); text-align: right; font-weight: 500;">${fields['Best Local DSCP']}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="background: var(--gray-100); border-radius: var(--radius); padding: 15px; display: flex; align-items: flex-start; gap: 10px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                                <div style="flex: 1; font-size: 14px; color: var(--gray-600);">
+                                    <p style="margin-bottom: 8px;"><strong>Voice VLAN</strong> provides a dedicated VLAN for voice traffic, ensuring Quality of Service (QoS).</p>
+                                    <p><strong>VPT</strong> (VLAN Priority Tag) and <strong>DSCP</strong> (Differentiated Services Code Point) are QoS markers that prioritize voice packets.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            }
+    
+            function formatDate(dateStr) {
+                if (!dateStr || dateStr === 'N/A') return 'N/A';
+                try {
+                    const parts = dateStr.split(' ');
+                    const dateParts = parts[0].split('-');
+                    const timeParts = parts[1].split(':');
+                    const months = { 'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11 };
+                    const day = parseInt(dateParts[0]);
+                    const month = months[dateParts[1]];
+                    const year = 2000 + parseInt(dateParts[2]);
+                    const hour = parseInt(timeParts[0]);
+                    const minute = parseInt(timeParts[1]);
+                    const date = new Date(year, month, day, hour, minute);
+                    return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+    
+            function formatMac(macStr) {
+                if (!macStr || macStr === 'N/A') return 'N/A';
+                const macMatch = macStr.match(/([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|([0-9A-Fa-f]{2}){6}/i);
+                if (macMatch) {
+                    let mac = macMatch[0];
+                    mac = mac.replace(/[:-]/g, '');
+                    mac = mac.match(/.{2}/g).join(':');
+                    return mac.toLowerCase();
+                }
+                return 'N/A';
+            }
+    
+            function createPriorityItem(label, value, localValue) {
+                return `
+                    <div>
+                        <div style="font-size: 13px; color: var(--gray-600); margin-bottom: 5px;">${label}</div>
+                        <div style="font-size: 18px; font-weight: 600; color: var(--gray-800);">${value}</div>
+                        ${localValue !== 'N/A' ? `<div style="font-size: 12px; margin-top: 5px; color: var(--gray-600);">Local Setting: ${localValue}</div>` : ''}
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
